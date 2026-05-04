@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eduvate App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { background: #f1f5f9; color: #1e293b; font-family: 'Nunito', sans-serif; }
+        .card-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01); }
+        .course-card:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        /* Animasi Game */
+        @keyframes pop { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop { animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR PUTIH BERSIH -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex flex-col p-6 z-20">
+        <div class="text-2xl font-black text-blue-600 mb-8 flex items-center gap-2">
+            <div class="bg-blue-600 text-white p-1.5 rounded-xl"><i data-lucide="graduation-cap" class="w-6 h-6"></i></div> EDUVATE.
+        </div>
+        
+        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Menu Utama</p>
+        <nav id="sidebar-menu" class="space-y-1.5 flex-1"></nav>
+
+        <div class="mt-auto border-t border-slate-100 pt-6">
+            <button onclick="app.logout()" class="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 font-bold px-4 py-3 rounded-xl hover:bg-red-100 transition">
+                <i data-lucide="log-out" class="w-5 h-5"></i> Keluar
+            </button>
+        </div>
+    </aside>
+
+    <!-- KONTEN UTAMA -->
+    <main class="flex-1 flex flex-col h-screen relative overflow-hidden">
+        
+        <!-- HEADER TOP -->
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200 flex justify-between items-center px-8 z-10 sticky top-0">
+            <h1 id="page-title" class="text-2xl font-black text-slate-800">Dashboard</h1>
+            <div class="flex items-center gap-4 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm cursor-pointer hover:bg-slate-50 transition" onclick="app.nav('profile')">
+                <div class="text-right">
+                    <p id="top-name" class="font-extrabold text-sm text-slate-800 leading-tight">Nama</p>
+                    <p id="top-role-exp" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 rounded-full inline-block mt-0.5">Role/EXP</p>
+                </div>
+                <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center font-black text-lg shadow-md" id="top-initial">U</div>
+            </div>
+        </header>
+
+        <!-- KANVAS AREA -->
+        <div class="flex-1 p-8 overflow-y-auto">
+            
+            <!-- ADMIN: BUAT KELAS -->
+            <section id="sec-admin-course" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <form onsubmit="app.adminAddCourse(event)" class="bg-white p-6 rounded-3xl border border-slate-100 card-shadow h-fit">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4"><i data-lucide="book-plus"></i></div>
+                        <h3 class="font-black text-xl mb-4 text-slate-800">Buat Kelas Baru</h3>
+                        <input type="text" id="c-title" placeholder="Judul Kelas (Contoh: Fisika Dasar)" required class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none mb-3 font-bold focus:border-blue-500 transition">
+                        <textarea id="c-desc" placeholder="Tulis ringkasan materi/deskripsi..." required class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none mb-4 focus:border-blue-500 transition resize-none h-24 text-sm"></textarea>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-black transition shadow-lg shadow-blue-500/30">Publish Kelas</button>
+                    </form>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 card-shadow">
+                        <h3 class="font-black text-xl mb-6 border-b border-slate-100 pb-4 text-slate-800">Daftar Kelas (Tampil di Siswa)</h3>
+                        <div id="admin-course-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ADMIN: BANK SOAL GAME -->
+            <section id="sec-admin-game" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <form onsubmit="app.adminAddGame(event)" class="bg-white p-6 rounded-3xl border border-slate-100 card-shadow h-fit">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-4"><i data-lucide="joystick"></i></div>
+                        <h3 class="font-black text-xl mb-4 text-slate-800">Buat Soal Edu-Quest</h3>
+                        <textarea id="g-q" placeholder="Pertanyaan Kuis..." required class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none mb-4 text-sm focus:border-purple-500" rows="3"></textarea>
+                        <div class="space-y-2 mb-6 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Pilihan Ganda</label>
+                            <input type="text" id="g-o1" placeholder="Jawaban BENAR (Kunci)" required class="w-full bg-green-50 border border-green-200 p-3 rounded-xl outline-none text-green-700 font-bold">
+                            <input type="text" id="g-o2" placeholder="Jawaban Pengecoh 1" required class="w-full bg-white border border-slate-200 p-3 rounded-xl outline-none text-sm">
+                            <input type="text" id="g-o3" placeholder="Jawaban Pengecoh 2" required class="w-full bg-white border border-slate-200 p-3 rounded-xl outline-none text-sm">
+                        </div>
+                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3.5 rounded-xl font-black transition shadow-lg shadow-purple-500/30">Simpan ke Bank Soal</button>
+                    </form>
+                    <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-100 card-shadow">
+                        <h3 class="font-black text-xl mb-6 border-b border-slate-100 pb-4 text-slate-800">Database Soal Edu-Quest</h3>
+                        <div id="admin-game-list" class="space-y-3"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SISWA: DAFTAR KELAS -->
+            <section id="sec-siswa-course" class="hidden">
+                <div class="mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 p-8 rounded-[2rem] text-white flex justify-between items-center shadow-xl shadow-blue-600/20">
+                    <div>
+                        <h2 class="text-3xl font-black mb-2">Halo, <span id="greet-name">Siswa</span>! 👋</h2>
+                        <p class="text-blue-100">Siap untuk mempelajari hal baru hari ini?</p>
+                    </div>
+                    <div class="hidden md:block w-24 h-24 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30">
+                        <i data-lucide="book-open" class="w-10 h-10 text-white"></i>
+                    </div>
+                </div>
+                <h3 class="text-xl font-black text-slate-800 mb-4">Kelas Tersedia</h3>
+                <div id="siswa-course-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </section>
+
+            <!-- SISWA: RUANG BELAJAR (Detail Kelas) -->
+            <section id="sec-study-room" class="hidden max-w-4xl mx-auto">
+                <button onclick="app.nav('siswa-course')" class="mb-6 flex items-center gap-2 text-slate-500 hover:text-blue-600 font-bold transition"><i data-lucide="arrow-left" class="w-5 h-5"></i> Kembali ke Daftar Kelas</button>
+                <div class="bg-white rounded-[2rem] overflow-hidden card-shadow border border-slate-100">
+                    <div class="h-48 bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
+                        <i data-lucide="graduation-cap" class="w-20 h-20 text-white/30"></i>
+                    </div>
+                    <div class="p-10">
+                        <div class="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-black mb-4 uppercase">Materi Kelas</div>
+                        <h2 id="study-title" class="text-3xl font-black text-slate-800 mb-2">Judul</h2>
+                        <p class="text-slate-500 font-bold mb-8 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Pengajar: <span id="study-author">Admin</span></p>
+                        
+                        <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                            <h4 class="font-black text-slate-700 mb-4">Deskripsi Pembelajaran:</h4>
+                            <p id="study-desc" class="text-slate-600 leading-relaxed whitespace-pre-line">Isi materi...</p>
+                        </div>
+                        <button onclick="app.nav('siswa-game')" class="mt-8 bg-yellow-400 hover:bg-yellow-500 text-yellow-900 px-8 py-4 rounded-xl font-black flex items-center gap-2 mx-auto transition shadow-lg shadow-yellow-400/30">
+                            <i data-lucide="swords"></i> Uji Pemahaman di Edu-Quest
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SISWA: GAME ARENA (Edu-Quest) -->
+            <section id="sec-siswa-game" class="hidden text-center">
+                <div id="game-intro" class="max-w-xl mx-auto mt-10">
+                    <div class="w-32 h-32 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner"><i data-lucide="swords" class="w-16 h-16 text-purple-600"></i></div>
+                    <h2 class="text-4xl font-black text-slate-800 mb-4">Edu-Quest Arena</h2>
+                    <p class="text-slate-500 text-lg mb-8 font-semibold">Jawab kuis dengan cepat & tepat untuk mengumpulkan EXP dan naik ke puncak Leaderboard!</p>
+                    <button onclick="app.startGame()" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-12 py-5 rounded-2xl font-black text-xl shadow-xl shadow-purple-500/30 hover:scale-105 transition transform">Mulai Tantangan</button>
+                </div>
+                
+                <div id="game-arena" class="max-w-2xl mx-auto bg-white p-10 rounded-[2rem] border-2 border-purple-200 card-shadow hidden animate-pop relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-2 bg-slate-100"><div id="game-progress" class="h-full bg-purple-500 transition-all duration-300 w-0"></div></div>
+                    <p class="text-purple-600 font-black text-sm uppercase tracking-widest mb-6">Pertanyaan <span id="q-num">1</span></p>
+                    <h3 id="game-q" class="text-2xl font-black text-slate-800 mb-10 leading-relaxed">Pertanyaan?</h3>
+                    <div id="game-options" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+            </section>
+
+            <!-- BERSAMA: LEADERBOARD PODIUM -->
+            <section id="sec-leaderboard" class="hidden max-w-4xl mx-auto">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-black text-slate-800">Papan Peringkat Pelajar</h2>
+                    <p class="text-slate-500 font-bold">Kumpulkan EXP dengan menyelesaikan Edu-Quest!</p>
+                </div>
+                <div class="bg-white rounded-[2rem] card-shadow border border-slate-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50 border-b border-slate-100 text-slate-500 font-black text-sm uppercase"><tr><th class="p-5 pl-8">Rank</th><th class="p-5">Siswa</th><th class="p-5">Pangkat</th><th class="p-5 text-right pr-8">Total EXP</th></tr></thead>
+                        <tbody id="list-leaderboard" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- BERSAMA: PROFIL -->
+            <section id="sec-profile" class="hidden max-w-lg mx-auto">
+                <div id="profile-badge-card" class="bg-white p-8 rounded-[2rem] border border-slate-100 card-shadow text-center mb-6 hidden">
+                    <div class="w-24 h-24 mx-auto bg-yellow-100 rounded-full flex items-center justify-center mb-4 border-4 border-yellow-300">
+                        <i data-lucide="award" class="w-12 h-12 text-yellow-600"></i>
+                    </div>
+                    <h3 id="badge-title" class="text-2xl font-black text-slate-800">Pangkat</h3>
+                    <p class="text-yellow-600 font-black text-xl mt-1"><span id="profile-exp-text">0</span> EXP</p>
+                </div>
+
+                <form onsubmit="app.updateProfile(event)" class="bg-white p-8 rounded-[2rem] border border-slate-100 card-shadow space-y-5">
+                    <h3 class="text-xl font-black text-slate-800 border-b border-slate-100 pb-4">Pengaturan Akun</h3>
+                    <div><label class="block text-xs font-black text-slate-500 mb-2 uppercase">Nama Lengkap</label><input type="text" id="p-name" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none text-slate-800 font-bold focus:bg-white focus:border-blue-500 transition"></div>
+                    <div><label class="block text-xs font-black text-slate-500 mb-2 uppercase">Email Pribadi</label><input type="email" id="p-email" readonly class="w-full bg-slate-100 border border-transparent p-3.5 rounded-xl text-slate-500 font-bold cursor-not-allowed"></div>
+                    <div><label id="lbl-instansi" class="block text-xs font-black text-slate-500 mb-2 uppercase">Instansi</label><input type="text" id="p-inst" class="w-full bg-slate-50 border border-slate-200 p-3.5 rounded-xl outline-none text-slate-800 font-bold focus:bg-white focus:border-blue-500 transition"></div>
+                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-xl font-black transition mt-4">Simpan Perubahan</button>
+                </form>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        const session = JSON.parse(localStorage.getItem('edu_session'));
+        if(!session) window.location.href = 'index.html';
+
+        class AppController {
+            constructor() {
+                this.role = session.role; 
+                this.dbUsers = JSON.parse(localStorage.getItem('edu_users')) || [];
+                this.dbCourses = JSON.parse(localStorage.getItem('edu_courses')) || [];
+                this.dbGames = JSON.parse(localStorage.getItem('edu_games')) || [];
+                this.gameIndex = 0;
+                this.initUI();
+            }
+
+            getBadge(exp) {
+                if(exp >= 1000) return '🏅 Legend Pelajar';
+                if(exp >= 500) return '🥇 Siswa Teladan';
+                if(exp >= 200) return '🥈 Pembelajar Aktif';
+                return '🥉 Pemula';
+            }
+
+            initUI() {
+                document.getElementById('top-name').innerText = session.name;
+                document.getElementById('greet-name').innerText = session.name.split(' ')[0]; // First name
+                document.getElementById('top-initial').innerText = session.name.charAt(0).toUpperCase();
+                document.getElementById('top-role-exp').innerText = this.role === 'admin' ? 'Guru/Admin' : `${session.exp} EXP`;
+
+                document.getElementById('p-name').value = session.name;
+                document.getElementById('p-email').value = session.email;
+                document.getElementById('p-inst').value = session.instansi;
+                document.getElementById('lbl-instansi').innerText = this.role === 'admin' ? 'Mata Pelajaran Diampu' : 'Asal Sekolah/Kampus';
+
+                if(this.role === 'mahasiswa') {
+                    document.getElementById('profile-badge-card').style.display = 'block';
+                    document.getElementById('profile-exp-text').innerText = session.exp;
+                    document.getElementById('badge-title').innerText = this.getBadge(session.exp);
+                }
+
+                // MENU STYLING UTILITY
+                const menuClass = (id, icon, text, color) => `<button onclick="app.nav('${id}')" id="nav-${id}" class="w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 hover:text-${color}-600 transition"><i data-lucide="${icon}" class="w-5 h-5"></i> ${text}</button>`;
+
+                const menuAdmin = menuClass('admin-course', 'book-open', 'Buat Kelas', 'blue') + menuClass('admin-game', 'joystick', 'Bank Soal', 'purple') + menuClass('leaderboard', 'trophy', 'Leaderboard', 'yellow');
+                const menuSiswa = menuClass('siswa-course', 'book-open', 'Ruang Belajar', 'blue') + menuClass('siswa-game', 'swords', 'Edu-Quest Arena', 'purple') + menuClass('leaderboard', 'trophy', 'Leaderboard', 'yellow');
+                
+                document.getElementById('sidebar-menu').innerHTML = this.role === 'admin' ? menuAdmin : menuSiswa;
+                lucide.createIcons();
+                this.nav(this.role === 'admin' ? 'admin-course' : 'siswa-course');
+            }
+
+            nav(targetId) {
+                ['admin-course', 'admin-game', 'siswa-course', 'study-room', 'siswa-game', 'leaderboard', 'profile'].forEach(s => {
+                    const sec = document.getElementById(`sec-${s}`);
+                    if(sec) sec.style.display = 'none';
+                    const navBtn = document.getElementById(`nav-${s}`);
+                    if(navBtn) navBtn.className = 'w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 hover:text-blue-600 transition';
+                });
+                
+                document.getElementById(`sec-${targetId}`).style.display = 'block';
+                if(document.getElementById(`nav-${targetId}`)) {
+                    document.getElementById(`nav-${targetId}`).className = 'w-full flex items-center gap-3 text-left px-4 py-3.5 rounded-2xl bg-blue-50 text-blue-700 font-black shadow-inner transition';
+                }
+
+                const titles = { 'admin-course': 'Manajemen Kelas', 'admin-game': 'Bank Soal Game', 'siswa-course': 'Beranda Belajar', 'study-room':'Ruang Kelas', 'siswa-game': 'Arena Bermain', 'leaderboard': 'Leaderboard', 'profile': 'Pengaturan Akun' };
+                document.getElementById('page-title').innerText = titles[targetId];
+
+                if(targetId === 'admin-course') this.renderAdminCourses();
+                if(targetId === 'admin-game') this.renderAdminGames();
+                if(targetId === 'siswa-course') this.renderSiswaCourses();
+                if(targetId === 'leaderboard') this.renderLeaderboard();
+            }
+
+            // ADMIN LOGIC
+            adminAddCourse(e) {
+                e.preventDefault();
+                this.dbCourses.push({ id: Date.now(), title: document.getElementById('c-title').value, desc: document.getElementById('c-desc').value, author: session.name });
+                localStorage.setItem('edu_courses', JSON.stringify(this.dbCourses));
+                e.target.reset();
+                this.renderAdminCourses();
+                alert("Kelas berhasil dipublish!");
+            }
+            renderAdminCourses() {
+                document.getElementById('admin-course-list').innerHTML = this.dbCourses.map(c => 
+                    `<div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                        <p class="font-black text-slate-800 mb-1">${c.title}</p>
+                        <p class="text-xs text-slate-500 line-clamp-2">${c.desc}</p>
+                    </div>`
+                ).join('') || '<p class="text-slate-400 font-bold col-span-2">Belum ada kelas dibuat.</p>';
+            }
+
+            adminAddGame(e) {
+                e.preventDefault();
+                this.dbGames.push({
+                    q: document.getElementById('g-q').value,
+                    options: [document.getElementById('g-o1').value, document.getElementById('g-o2').value, document.getElementById('g-o3').value],
+                    ans: document.getElementById('g-o1').value
+                });
+                localStorage.setItem('edu_games', JSON.stringify(this.dbGames));
+                e.target.reset();
+                this.renderAdminGames();
+            }
+            renderAdminGames() {
+                document.getElementById('admin-game-list').innerHTML = this.dbGames.map((g, i) => 
+                    `<div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                        <p class="font-black text-slate-800 mb-2"><span class="text-purple-600">Soal ${i+1}:</span> ${g.q}</p>
+                        <p class="text-sm font-bold text-green-600 bg-green-100 px-3 py-1 rounded-lg inline-block">Kunci: ${g.ans}</p>
+                    </div>`
+                ).join('') || '<p class="text-slate-400 font-bold">Bank soal kosong.</p>';
+            }
+
+            // SISWA LOGIC
+            renderSiswaCourses() {
+                document.getElementById('siswa-course-list').innerHTML = this.dbCourses.map(c => 
+                    `<div class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-100 course-card cursor-pointer" onclick="app.openStudyRoom(${c.id})">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-4"><i data-lucide="book" class="w-6 h-6"></i></div>
+                        <h3 class="font-black text-xl mb-2 text-slate-800 leading-tight">${c.title}</h3>
+                        <p class="text-sm text-slate-500 font-bold mb-6">Oleh: ${c.author}</p>
+                        <div class="w-full bg-slate-50 text-blue-600 text-center py-3 rounded-xl font-black text-sm">Masuk Kelas</div>
+                    </div>`
+                ).join('') || '<div class="col-span-3 text-center py-10"><i data-lucide="folder-open" class="mx-auto w-12 h-12 text-slate-300 mb-4"></i><p class="text-slate-500 font-bold">Pengajar belum mengunggah materi.</p></div>';
+                lucide.createIcons();
+            }
+
+            openStudyRoom(id) {
+                const course = this.dbCourses.find(c => c.id === id);
+                if(!course) return;
+                document.getElementById('study-title').innerText = course.title;
+                document.getElementById('study-author').innerText = course.author;
+                document.getElementById('study-desc').innerText = course.desc;
+                this.nav('study-room');
+            }
+
+            startGame() {
+                if(this.dbGames.length === 0) return alert("Belum ada kuis yang tersedia dari Pengajar!");
+                document.getElementById('game-intro').style.display = 'none';
+                document.getElementById('game-arena').style.display = 'block';
+                this.gameIndex = 0;
+                this.loadQuestion();
+            }
+            loadQuestion() {
+                if(this.gameIndex >= this.dbGames.length) {
+                    alert("Yey! Kamu menyelesaikan semua soal Edu-Quest!");
+                    document.getElementById('game-arena').style.display = 'none';
+                    document.getElementById('game-intro').style.display = 'block';
+                    return;
+                }
+                const game = this.dbGames[this.gameIndex];
+                document.getElementById('q-num').innerText = this.gameIndex + 1;
+                document.getElementById('game-q').innerText = game.q;
+                
+                // Progress Bar
+                document.getElementById('game-progress').style.width = `${((this.gameIndex) / this.dbGames.length) * 100}%`;
+                
+                let shuffled = [...game.options].sort(() => Math.random() - 0.5);
+                document.getElementById('game-options').innerHTML = shuffled.map(opt => 
+                    `<button onclick="app.checkAnswer('${opt}', '${game.ans}')" class="bg-slate-50 hover:bg-purple-600 hover:text-white text-slate-700 p-5 rounded-2xl font-black transition border-2 border-slate-100 hover:border-purple-600 shadow-sm">${opt}</button>`
+                ).join('');
+            }
+            checkAnswer(selected, correct) {
+                if(selected === correct) {
+                    session.exp += 150; // Naikkan EXP agar cepat dapat badge
+                    this.saveSessionAndDB();
+                    // Efek Benar
+                    document.getElementById('game-arena').classList.remove('animate-pop');
+                    void document.getElementById('game-arena').offsetWidth; // trigger reflow
+                    document.getElementById('game-arena').classList.add('animate-pop');
+                    this.gameIndex++;
+                    this.loadQuestion();
+                } else {
+                    alert(`Opps! Jawaban kurang tepat.\nKunci: ${correct}`);
+                    this.gameIndex++;
+                    this.loadQuestion();
+                }
+            }
+
+            // BERSAMA
+            renderLeaderboard() {
+                this.dbUsers = JSON.parse(localStorage.getItem('edu_users')) || [];
+                const students = this.dbUsers.filter(u => u.role === 'mahasiswa').sort((a, b) => b.exp - a.exp);
+                
+                document.getElementById('list-leaderboard').innerHTML = students.map((s, i) => {
+                    const isMe = s.email === session.email;
+                    const rowClass = isMe ? 'bg-blue-50/50' : 'hover:bg-slate-50 transition';
+                    const icon = i === 0 ? '<div class="w-8 h-8 bg-yellow-400 text-white rounded-full flex items-center justify-center font-black shadow-md shadow-yellow-400/50">1</div>' : 
+                                (i === 1 ? '<div class="w-8 h-8 bg-slate-300 text-slate-600 rounded-full flex items-center justify-center font-black shadow-md">2</div>' : 
+                                (i === 2 ? '<div class="w-8 h-8 bg-orange-300 text-orange-800 rounded-full flex items-center justify-center font-black shadow-md">3</div>' : 
+                                `<span class="text-slate-400 font-black pl-3">${i+1}</span>`));
+                    
+                    return `
+                        <tr class="${rowClass}">
+                            <td class="p-5 pl-8 w-16">${icon}</td>
+                            <td class="p-5 font-black text-slate-800">${s.name} ${isMe ? '<span class="bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-full ml-2">SAYA</span>' : ''}</td>
+                            <td class="p-5"><span class="bg-indigo-100 text-indigo-700 font-black text-xs px-3 py-1 rounded-full">${this.getBadge(s.exp)}</span></td>
+                            <td class="p-5 text-right pr-8 font-black text-yellow-500 text-lg">${s.exp} XP</td>
+                        </tr>
+                    `;
+                }).join('') || '<tr><td colspan="4" class="p-8 text-center text-slate-500 font-bold">Belum ada peringkat.</td></tr>';
+            }
+
+            updateProfile(e) {
+                e.preventDefault();
+                session.name = document.getElementById('p-name').value;
+                session.instansi = document.getElementById('p-inst').value;
+                this.saveSessionAndDB();
+                alert("Profil disimpan!");
+            }
+
+            saveSessionAndDB() {
+                localStorage.setItem('edu_session', JSON.stringify(session));
+                this.initUI();
+                this.dbUsers = JSON.parse(localStorage.getItem('edu_users')) || [];
+                let idx = this.dbUsers.findIndex(u => u.email === session.email);
+                if(idx !== -1) {
+                    this.dbUsers[idx].name = session.name;
+                    this.dbUsers[idx].instansi = session.instansi;
+                    this.dbUsers[idx].exp = session.exp;
+                    localStorage.setItem('edu_users', JSON.stringify(this.dbUsers));
+                }
+            }
+            logout() { localStorage.removeItem('edu_session'); window.location.href = 'index.html'; }
+        }
+
+        const app = new AppController();
+    </script>
+</body>
+</html>
